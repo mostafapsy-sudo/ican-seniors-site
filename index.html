@@ -381,7 +381,7 @@
                 <h2>مركز I can للتدخل المبكر</h2>
                 <div class="tabs">
                     <button class="tab-btn active" data-tab="admin">إدارة</button>
-                    <button class="tab-btn" data-tab="specialist">أخصائي</button>
+                    <button class="tab-btn" data-tab="specialist">سينيور</button>
                 </div>
                 <div id="admin-login" class="tab-content active">
                     <input type="text" id="admin-code" placeholder="كود الدخول" value="">
@@ -403,7 +403,7 @@
                 <button id="admin-logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
             </div>
             <div class="admin-actions">
-                <button id="add-specialist-btn"><i class="fas fa-user-plus"></i> إضافة أخصائي</button>
+                <button id="add-specialist-btn"><i class="fas fa-user-plus"></i> إضافة سينيور</button>
                 <button id="backup-btn"><i class="fas fa-download"></i> نسخ احتياطي</button>
                 <button id="restore-btn"><i class="fas fa-upload"></i> استعادة نسخة</button>
                 <button id="trash-btn"><i class="fas fa-trash-alt"></i> السلة</button>
@@ -448,7 +448,7 @@
         <div id="specialist-form-screen" class="screen">
             <div class="header">
                 <button class="back-btn"><i class="fas fa-arrow-right"></i> رجوع</button>
-                <h3 id="form-title">إضافة أخصائي</h3>
+                <h3 id="form-title">إضافة سينيور</h3>
             </div>
             <form id="specialist-form">
                 <input type="hidden" id="specialist-id">
@@ -531,7 +531,7 @@
             </div>
             <form id="session-form">
                 <input type="hidden" id="session-id">
-                <label>اسم الأخصائي</label>
+                <label>اسم السينيور</label>
                 <input type="text" id="session-specialist" required>
                 
                 <label>عدد الأهداف الأسبوعية</label>
@@ -611,7 +611,7 @@
             </div>
             <div class="trash-tabs">
                 <button class="trash-tab active" data-type="children">الأطفال</button>
-                <button class="trash-tab" data-type="specialists">الأخصائيون</button>
+                <button class="trash-tab" data-type="specialists">السينيورز</button>
             </div>
             <div id="trash-items" class="list-container"></div>
         </div>
@@ -620,7 +620,7 @@
         <div id="stats-screen" class="screen">
             <div class="header">
                 <button class="back-btn"><i class="fas fa-arrow-right"></i> رجوع</button>
-                <h3>إحصائيات الأخصائيين</h3>
+                <h3>إحصائيات السينيورز</h3>
             </div>
             <div id="stats-container"></div>
         </div>
@@ -831,7 +831,7 @@
             db.collection('specialists').where('deleted', '==', false).get()
                 .then(snapshot => {
                     if (snapshot.empty) {
-                        container.innerHTML = '<p>لا يوجد أخصائيون بعد</p>';
+                        container.innerHTML = '<p>لا يوجد سينيورز بعد</p>';
                         return;
                     }
                     let html = '';
@@ -854,7 +854,7 @@
         }
 
         document.getElementById('add-specialist-btn').addEventListener('click', () => {
-            document.getElementById('form-title').textContent = 'إضافة أخصائي';
+            document.getElementById('form-title').textContent = 'إضافة سينيور';
             document.getElementById('specialist-form').reset();
             document.getElementById('specialist-id').value = '';
             showScreen('specialist-form-screen');
@@ -880,7 +880,7 @@
                     await db.collection('specialists').doc(cred.user.uid).set({
                         name, specialization, startDate, email, deleted: false
                     });
-                    alert('تمت إضافة الأخصائي');
+                    alert('تمت إضافة السينيور');
                     showScreen('admin-screen');
                     loadSpecialists();
                 } catch (err) {
@@ -892,7 +892,7 @@
         window.editSpecialist = async (id) => {
             const doc = await db.collection('specialists').doc(id).get();
             const s = doc.data();
-            document.getElementById('form-title').textContent = 'تعديل أخصائي';
+            document.getElementById('form-title').textContent = 'تعديل سينيور';
             document.getElementById('specialist-id').value = id;
             document.getElementById('specialist-name-input').value = s.name;
             document.getElementById('specialist-specialization').value = s.specialization;
