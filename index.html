@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>مركز I can - متابعة الأطفال</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        #app {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .screen {
+            display: none;
+            padding: 15px;
+            padding-bottom: 30px;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #4a90e2;
+        }
+
+        .header h2, .header h3 {
+            font-size: 1.3rem;
+            color: #2c3e50;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: #4a90e2;
+            cursor: pointer;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            color: #e74c3c;
+            cursor: pointer;
+        }
+
+        .login-container {
+            max-width: 350px;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        .tabs {
+            display: flex;
+            margin: 20px 0;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+
+        .tab-btn.active {
+            color: #4a90e2;
+            border-bottom: 3px solid #4a90e2;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            margin: 5px 0;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: #357ab8;
+        }
+
+        button.danger-btn {
+            background-color: #e74c3c;
+        }
+
+        button.danger-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .error {
+            color: #e74c3c;
+            margin-top: 10px;
+        }
+
+        .list-container {
+            margin-top: 20px;
+        }
+
+        .list-item {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-right: 4px solid #4a90e2;
+            position: relative;
+        }
+
+        .list-item .item-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .list-item .item-subtitle {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin: 5px 0;
+        }
+
+        .list-item .item-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .list-item .item-actions button {
+            flex: 1;
+            padding: 8px;
+            font-size: 0.9rem;
+            background-color: #ecf0f1;
+            color: #2c3e50;
+        }
+
+        .list-item .item-actions button.edit-btn {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .list-item .item-actions button.delete-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .admin-actions, .specialist-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* حذف الأكواد الخاطئة التي كانت داخل CSS */
+
+        .weeks-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .week-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #4a90e2;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: 3px solid transparent;
+        }
+
+        .week-btn.active-week {
+            border-color: #f39c12;
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .areas-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .area-btn {
+            background-color: #3498db;
+            padding: 15px 5px;
+            font-size: 0.9rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 2px solid transparent;
+        }
+
+        .area-btn.active-area {
+            border-color: #f1c40f;
+            background-color: #2980b9;
+            font-weight: bold;
+        }
+
+        .rating-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 10px 0 20px;
+        }
+
+        .rating-group input[type="radio"] {
+            display: none;
+        }
+
+        .rating-group input[type="radio"]:checked + label {
+            background-color: #4a90e2;
+            color: white;
+            border-color: #4a90e2;
+        }
+
+        .rating-group label {
+            flex: 1 0 40%;
+            background: #ecf0f1;
+            padding: 8px;
+            border-radius: 20px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        /* تنسيق التقارير للشاشة والطباعة */
+        .report-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 15px;
+        }
+
+        .report-section {
+            margin-bottom: 25px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .report-section h4 {
+            color: #4a90e2;
+            margin-bottom: 10px;
+        }
+
+        .report-item {
+            margin-right: 15px;
+            padding: 5px 0;
+        }
+
+        .report-badge {
+            display: inline-block;
+            background: #2ecc71;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+
+        @media print {
+            body, #app, .screen {
+                background: white;
+                padding: 0;
+                margin: 0;
+                box-shadow: none;
+            }
+            .header, .back-btn, #print-report-btn, .logout-btn {
+                display: none !important;
+            }
+            .report-content {
+                box-shadow: none;
+                padding: 0;
+            }
+        }
+
+        /* تنسيق السلة */
+        .trash-tabs {
+            display: flex;
+            margin-bottom: 15px;
+        }
+
+        .trash-tab {
+            flex: 1;
+            background: #bdc3c7;
+            color: white;
+            border-radius: 0;
+        }
+
+        .trash-tab.active {
+            background: #e67e22;
+        }
+
+        /* إحصائيات */
+        .stats-card {
+            background: #ecf0f1;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .stats-card h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .stats-detail {
+            margin-right: 20px;
+            font-size: 0.9rem;
+        }
+
+        .complete-badge {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .incomplete-badge {
+            color: #e67e22;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- شاشة تسجيل الدخول -->
+        <div id="login-screen" class="screen active">
+            <div class="login-container">
+                <h2>مركز I can للتدخل المبكر</h2>
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="admin">إدارة</button>
+                    <button class="tab-btn" data-tab="specialist">أخصائي</button>
+                </div>
+                <div id="admin-login" class="tab-content active">
+                    <input type="text" id="admin-code" placeholder="كود الدخول" value="">
+                    <button id="admin-login-btn">دخول</button>
+                </div>
+                <div id="specialist-login" class="tab-content">
+                    <input type="email" id="specialist-email" placeholder="البريد الإلكتروني">
+                    <input type="password" id="specialist-password" placeholder="كلمة المرور">
+                    <button id="specialist-login-btn">دخول</button>
+                </div>
+                <div id="login-error" class="error"></div>
+            </div>
+        </div>
+
+        <!-- شاشة الإدارة -->
+        <div id="admin-screen" class="screen">
+            <div class="header">
+                <h2>لوحة التحكم - الإدارة</h2>
+                <button id="admin-logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+            <div class="admin-actions">
+                <button id="add-specialist-btn"><i class="fas fa-user-plus"></i> إضافة أخصائي</button>
+                <button id="backup-btn"><i class="fas fa-download"></i> نسخ احتياطي</button>
+                <button id="restore-btn"><i class="fas fa-upload"></i> استعادة نسخة</button>
+                <button id="trash-btn"><i class="fas fa-trash-alt"></i> السلة</button>
+                <button id="specialist-stats-btn"><i class="fas fa-chart-bar"></i> إحصائيات السينيورز</button>
+            </div>
+            <!-- الزر الجديد (موضوع خارج grid عمداً) -->
+            <div style="margin-top: 10px;">
+                <button id="view-all-children-btn" class="secondary-btn"><i class="fas fa-child"></i> عرض جميع الأطفال</button>
+            </div>
+            <div id="specialists-list" class="list-container">
+                <!-- سيتم عرض الأخصائيين هنا -->
+            </div>
+        </div>
+
+        <!-- شاشة جميع الأطفال (للإدارة) -->
+        <div id="admin-children-screen" class="screen">
+            <div class="header">
+                <button class="back-btn"><i class="fas fa-arrow-right"></i> رجوع</button>
+                <h3>جميع الأطفال</h3>
+            </div>
+            <div id="admin-children-list" class="list-container">
+                <!-- تظهر هنا قائمة الأطفال -->
+            </div>
+        </div>
+
+        <!-- شاشة الأخصائي -->
+        <div id="specialist-screen" class="screen">
+            <div class="header">
+                <h2>مرحباً <span id="specialist-name"></span></h2>
+                <button id="specialist-logout" class="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+            <div class="specialist-actions">
+                <button id="add-child-btn"><i class="fas fa-child"></i> إضافة طفل</button>
+                <button id="specialist-stats-btn2" class="stats-btn"><i class="fas fa-chart-bar"></i> إحصائيات</button>
+            </div>
+            <div id="children-list" class="list-container">
+                <!-- سيتم عرض الأطفال هنا -->
+            </div>
+        </div>
+
+        <!-- شاشة إضافة/تعديل أخصائي -->
+        <div id="specialist-form-screen" class="screen">
+            <div class="header">
+                <button class="back-btn"><i class="fas fa-arrow-right"></i> رجوع</button>
+                <h3 id="form-title">إضافة أخصائي</h3>
+            </div>
+            <form id="specialist-form">
+                <input type="hidden" id="specialist-id">
+                <label>الاسم</label>
+                <input type="text" id="specialist-name-input" required>
+                <label>التخصص</label>
+                <input type="text" id="specialist-specialization" required>
+                <label>تاريخ بدء العمل</label>
+                <input type="date" id="specialist-start-date" required>
+                <label>البريد الإلكتروني (يوزر)</label>
+                <input type="email" id="specialist-email-input" required>
+                <label>كلمة المرور</label>
+                <input type="password" id="specialist-password-input" required>
+                <button type="submit">حفظ</button>
+            </form>
+        </div>
+
+        <!-- شاشة إضافة/تعديل طفل -->
+        <div id="child-form-screen" class="screen">
+            <div class="header">
+                <button class="back-btn"><i class="fas fa-arrow-right"></i> رجوع</button>
+                <h3 id="child-form-title">إضافة طفل</h3>
+            </div>
+            <form id="child-form">
+                <input type="hidden" id="child-id">
+                <label>اسم الطفل</label>
+                <input type="text" id="child-name" required>
+                <label>تاريخ الميلاد</label>
+                <input type="date" id="child-birthdate" required>
+                <label>التشخيص المبدئي</label>
+                <input type="text" id="child-diagnosis" required>
+                <button type="submit">حفظ</button>
+            </form>
+        </div>
+
+        <!-- شاشة عرض تفاصيل الطفل (الأشهر) -->
+        <div id="child-months-screen" class="screen">
+            <div class="header">
+                <button class="back-btn"><i class="fas fa-arrow-right"></i> رجوع</button>
+                <h3 id="child-name-display"></h3>
+                <span id="child-age-display" class="age-badge"></span>
+            </div>
+            <div class="month-actions">
+                <button id="add-month-btn"><i class="fas fa-calendar-plus"></i> إضافة شهر</button>
+                <button id="month-report-btn"><i class="fas fa-file-pdf"></i> تقرير الشهر</button>
+            </div>
+            <div id="months-list" class="list-container">
+                <!-- قائمة الأشهر -->
+            </div>
+        </div>
+
+        <!-- شاشة أسابيع شهر محدد -->
+        <div id="month-weeks-screen" class="screen">
+            <div class="header">
+                <button class="back-btn"><i class="fas fa-arrow-right"></i> رجوع</button>
+                <h3 id="month-name-display"></h3>
+            </div>
+            <div id="weeks-list" class="weeks-container">
+                <!-- أسابيع الشهر (1-5) -->
+            </div>
+        </div>
+
+        <!-- شاشة مجالات الأسبوع -->
+        <div id="week-areas-screen" class="screen">
+            <div class="header">
+                <button class="back-btn"><i class="fas fa-arrow-right"></i> رجوع</button>
+                <h3>الأسبوع <span id="week-number"></span></h3>
+                <button id="week-report-btn"><i class="fas fa-file-pdf"></i> تقرير الأسبوع</button>
+            </div>
+            <div id="areas-grid" class="areas-grid">
+                <!-- أزرار المجالات -->
+            </div>
+        </div>
+
+        <!-- شاشة تسجيل جلسة مجال -->
+        <div id="session-screen" class="screen">
+            <div class="header">
+                <button class="back-btn"><i class="fas fa-arrow-right"></i> رجوع</button>
+                <h3 id="area-name-display"></h3>
+            </div>
+            <form id="session-form">
+                <input type="hidden" id="session-id">
+                <label>اسم الأخصائي</label>
+                <input type="text" id="session-specialist" required>
+                
+                <label>عدد الأهداف الأسبوعية</label>
+                <input type="number" id="session-goals" min="0" required>
+                
+                <label>عدد الفيديوهات المرسلة للجروب</label>
+                <input type="number" id="session-videos" min="0" required>
+                
+                <label>تقييم الدافعية</label>
+                <div class="rating-group" id="rating-motivation">
+                    <input type="radio" name="motivation" id="motif-weak" value="ضعيف">
+                    <label for="motif-weak">ضعيف</label>
+                    <input type="radio" name="motivation" id="motif-accept" value="مقبول">
+                    <label for="motif-accept">مقبول</label>
+                    <input type="radio" name="motivation" id="motif-good" value="جيد">
+                    <label for="motif-good">جيد</label>
+                    <input type="radio" name="motivation" id="motif-vgood" value="جيد جدا">
+                    <label for="motif-vgood">جيد جدا</label>
+                </div>
+                
+                <label>تقييم السلوك العام</label>
+                <div class="rating-group" id="rating-behavior">
+                    <input type="radio" name="behavior" id="behave-weak" value="ضعيف">
+                    <label for="behave-weak">ضعيف</label>
+                    <input type="radio" name="behavior" id="behave-accept" value="مقبول">
+                    <label for="behave-accept">مقبول</label>
+                    <input type="radio" name="behavior" id="behave-good" value="جيد">
+                    <label for="behave-good">جيد</label>
+                    <input type="radio" name="behavior" id="behave-vgood" value="جيد جدا">
+                    <label for="behave-vgood">جيد جدا</label>
+                </div>
+                
+                <label>مدى تحقق الأهداف</label>
+                <div class="rating-group" id="rating-achieved">
+                    <input type="radio" name="goalsAchieved" id="goal-weak" value="ضعيف">
+                    <label for="goal-weak">ضعيف</label>
+                    <input type="radio" name="goalsAchieved" id="goal-accept" value="مقبول">
+                    <label for="goal-accept">مقبول</label>
+                    <input type="radio" name="goalsAchieved" id="goal-good" value="جيد">
+                    <label for="goal-good">جيد</label>
+                    <input type="radio" name="goalsAchieved" id="goal-vgood" value="جيد جدا">
+                    <label for="goal-vgood">جيد جدا</label>
+                </div>
+                
+                <label>تفاعل ولي الأمر على الجروب</label>
+                <div class="rating-group" id="rating-parent">
+                    <input type="radio" name="parentInteraction" id="parent-weak" value="ضعيف">
+                    <label for="parent-weak">ضعيف</label>
+                    <input type="radio" name="parentInteraction" id="parent-accept" value="مقبول">
+                    <label for="parent-accept">مقبول</label>
+                    <input type="radio" name="parentInteraction" id="parent-good" value="جيد">
+                    <label for="parent-good">جيد</label>
+                    <input type="radio" name="parentInteraction" id="parent-vgood" value="جيد جدا">
+                    <label for="parent-vgood">جيد جدا</label>
+                </div>
+                
+                <label>التطورات العامة للطفل</label>
+                <textarea id="session-general" rows="3"></textarea>
+                
+                <label>التوجيهات الفنية التي تمت وما تم منها</label>
+                <textarea id="session-technical" rows="3"></textarea>
+                
+                <label>المقترحات الفنية إن وجدت</label>
+                <textarea id="session-suggestions" rows="3"></textarea>
+                
+                <button type="submit">حفظ</button>
+                <button type="button" id="delete-session-btn" class="delete-btn">حذف هذه الجلسة</button>
+            </form>
+        </div>
+
+        <!-- شاشة السلة -->
+        <div id="trash-screen" class="screen">
+            <div class="header">
+                <button class="back-btn"><i class="fas fa-arrow-right"></i> رجوع</button>
+                <h3>سلة المحذوفات</h3>
+                <button id="empty-trash-btn" class="danger-btn"><i class="fas fa-trash"></i> تفريغ السلة</button>
+            </div>
+            <div class="trash-tabs">
+                <button class="trash-tab active" data-type="children">الأطفال</button>
+                <button class="trash-tab" data-type="specialists">الأخصائيون</button>
+            </div>
+            <div id="trash-items" class="list-container"></div>
+        </div>
+
+        <!-- شاشة إحصائيات السينيورز -->
+        <div id="stats-screen" class="screen">
+            <div class="header">
+                <button class="back-btn"><i class="fas fa-arrow-right"></i> رجوع</button>
+                <h3>إحصائيات الأخصائيين</h3>
+            </div>
+            <div id="stats-container"></div>
+        </div>
+
+        <!-- شاشة عرض التقرير (قابل للطباعة) -->
+        <div id="report-screen" class="screen">
+            <div class="header">
+                <button class="back-btn"><i class="fas fa-arrow-right"></i> رجوع</button>
+                <h3 id="report-title"></h3>
+                <button id="print-report-btn"><i class="fas fa-print"></i> طباعة / PDF</button>
+            </div>
+            <div id="report-content" class="report-content"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // -------------------- إعدادات Firebase --------------------
+        const firebaseConfig = {
+            apiKey: "AIzaSyBPOpcMDH6GXpNyTPLnuvflDb2w03bBCnI",
+            authDomain: "ican-seniors2.firebaseapp.com",
+            databaseURL: "https://ican-seniors2-default-rtdb.firebaseio.com",
+            projectId: "ican-seniors2",
+            storageBucket: "ican-seniors2.firebasestorage.app",
+            messagingSenderId: "1047922860797",
+            appId: "1:1047922860797:web:8f84a6788ca2c033855494",
+            measurementId: "G-XE5ZN52Z4C"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ==================== المتغيرات العامة ====================
+        let currentUser = null; // { type: 'admin' أو 'specialist', id, name? }
+        let currentChildId = null;
+        let currentChildData = null;
+        let currentYearMonth = null; // مثلاً "2025-01"
+        let currentWeek = null;
+        let currentArea = null;
+
+        // عناصر DOM
+        const screens = document.querySelectorAll('.screen');
+        const loginScreen = document.getElementById('login-screen');
+        const adminScreen = document.getElementById('admin-screen');
+        const specialistScreen = document.getElementById('specialist-screen');
+        const specialistFormScreen = document.getElementById('specialist-form-screen');
+        const childFormScreen = document.getElementById('child-form-screen');
+        const childMonthsScreen = document.getElementById('child-months-screen');
+        const monthWeeksScreen = document.getElementById('month-weeks-screen');
+        const weekAreasScreen = document.getElementById('week-areas-screen');
+        const sessionScreen = document.getElementById('session-screen');
+        const trashScreen = document.getElementById('trash-screen');
+        const statsScreen = document.getElementById('stats-screen');
+        const reportScreen = document.getElementById('report-screen');
+        const adminChildrenScreen = document.getElementById('admin-children-screen');
+
+        // ==================== دالة الرجوع المصححة ====================
+        function goBack() {
+            if (reportScreen.classList.contains('active')) {
+                if (window.currentComprehensiveChildId) {
+                    showScreen('admin-children-screen');
+                    window.currentComprehensiveChildId = null;
+                } else if (currentWeek && currentYearMonth) {
+                    showScreen('week-areas-screen');
+                } else {
+                    showScreen('month-weeks-screen');
+                }
+            }
+            else if (sessionScreen.classList.contains('active')) {
+                showScreen('week-areas-screen');
+            }
+            else if (weekAreasScreen.classList.contains('active')) {
+                showScreen('month-weeks-screen');
+            }
+            else if (monthWeeksScreen.classList.contains('active')) {
+                showScreen('child-months-screen');
+            }
+            else if (childMonthsScreen.classList.contains('active')) {
+                showScreen('specialist-screen');
+            }
+            else if (childFormScreen.classList.contains('active')) {
+                showScreen('specialist-screen');
+            }
+            else if (specialistFormScreen.classList.contains('active')) {
+                showScreen('admin-screen');
+            }
+            else if (trashScreen.classList.contains('active')) {
+                showScreen('admin-screen');
+            }
+            else if (statsScreen.classList.contains('active')) {
+                if (currentUser && currentUser.type === 'admin') {
+                    showScreen('admin-screen');
+                } else {
+                    showScreen('specialist-screen');
+                }
+            }
+            else if (adminChildrenScreen && adminChildrenScreen.classList.contains('active')) {
+                showScreen('admin-screen');
+            }
+            else {
+                window.history.back();
+            }
+        }
+
+        // ربط أزرار الرجوع
+        document.querySelectorAll('.back-btn').forEach(btn => {
+            btn.addEventListener('click', goBack);
+        });
+
+        // دالة التبديل بين الشاشات
+        function showScreen(screenId) {
+            screens.forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // التحقق من حالة تسجيل الدخول المخزنة
+        function checkStoredLogin() {
+            const stored = localStorage.getItem('ican_user');
+            if (stored) {
+                const user = JSON.parse(stored);
+                if (user.type === 'admin') {
+                    currentUser = user;
+                    showScreen('admin-screen');
+                    loadSpecialists();
+                } else if (user.type === 'specialist') {
+                    if (auth.currentUser) {
+                        currentUser = user;
+                        showScreen('specialist-screen');
+                        document.getElementById('specialist-name').textContent = user.name;
+                        loadChildren();
+                    } else {
+                        localStorage.removeItem('ican_user');
+                    }
+                }
+            }
+        }
+
+        // ==================== تسجيل الدخول ====================
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                const tab = e.target.dataset.tab;
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`${tab}-login`).classList.add('active');
+            });
+        });
+
+        document.getElementById('admin-login-btn').addEventListener('click', () => {
+            const code = document.getElementById('admin-code').value.trim();
+            if (code === 'رمضان كريم') {
+                currentUser = { type: 'admin' };
+                localStorage.setItem('ican_user', JSON.stringify(currentUser));
+                showScreen('admin-screen');
+                loadSpecialists();
+            } else {
+                document.getElementById('login-error').textContent = 'الكود غير صحيح';
+            }
+        });
+
+        document.getElementById('specialist-login-btn').addEventListener('click', () => {
+            const email = document.getElementById('specialist-email').value.trim();
+            const password = document.getElementById('specialist-password').value;
+            auth.signInWithEmailAndPassword(email, password)
+                .then(async (cred) => {
+                    const doc = await db.collection('specialists').doc(cred.user.uid).get();
+                    if (doc.exists && !doc.data().deleted) {
+                        currentUser = {
+                            type: 'specialist',
+                            id: cred.user.uid,
+                            name: doc.data().name
+                        };
+                        localStorage.setItem('ican_user', JSON.stringify(currentUser));
+                        showScreen('specialist-screen');
+                        document.getElementById('specialist-name').textContent = doc.data().name;
+                        loadChildren();
+                    } else {
+                        auth.signOut();
+                        document.getElementById('login-error').textContent = 'الحساب غير نشط';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('login-error').textContent = 'البريد أو كلمة المرور غير صحيحة';
+                });
+        });
+
+        document.getElementById('admin-logout').addEventListener('click', logout);
+        document.getElementById('specialist-logout').addEventListener('click', logout);
+
+        function logout() {
+            if (currentUser && currentUser.type === 'specialist') {
+                auth.signOut();
+            }
+            localStorage.removeItem('ican_user');
+            currentUser = null;
+            showScreen('login-screen');
+        }
+
+        // ==================== إدارة الأخصائيين ====================
+        function loadSpecialists() {
+            const container = document.getElementById('specialists-list');
+            container.innerHTML = '<p>جاري التحميل...</p>';
+            db.collection('specialists').where('deleted', '==', false).get()
+                .then(snapshot => {
+                    if (snapshot.empty) {
+                        container.innerHTML = '<p>لا يوجد أخصائيون بعد</p>';
+                        return;
+                    }
+                    let html = '';
+                    snapshot.forEach(doc => {
+                        const s = doc.data();
+                        html += `
+                            <div class="list-item" data-id="${doc.id}">
+                                <div class="item-title">${s.name}</div>
+                                <div class="item-subtitle">${s.specialization} | بداية: ${new Date(s.startDate).toLocaleDateString('ar-EG')}</div>
+                                <div class="item-subtitle">${s.email}</div>
+                                <div class="item-actions">
+                                    <button class="edit-btn" onclick="editSpecialist('${doc.id}')"><i class="fas fa-edit"></i> تعديل</button>
+                                    <button class="delete-btn" onclick="deleteSpecialist('${doc.id}')"><i class="fas fa-trash"></i> حذف</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                });
+        }
+
+        document.getElementById('add-specialist-btn').addEventListener('click', () => {
+            document.getElementById('form-title').textContent = 'إضافة أخصائي';
+            document.getElementById('specialist-form').reset();
+            document.getElementById('specialist-id').value = '';
+            showScreen('specialist-form-screen');
+        });
+
+        document.getElementById('specialist-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('specialist-id').value;
+            const name = document.getElementById('specialist-name-input').value;
+            const specialization = document.getElementById('specialist-specialization').value;
+            const startDate = document.getElementById('specialist-start-date').value;
+            const email = document.getElementById('specialist-email-input').value;
+            const password = document.getElementById('specialist-password-input').value;
+
+            if (id) {
+                await db.collection('specialists').doc(id).update({ name, specialization, startDate, email });
+                alert('تم التحديث');
+                showScreen('admin-screen');
+                loadSpecialists();
+            } else {
+                try {
+                    const cred = await auth.createUserWithEmailAndPassword(email, password);
+                    await db.collection('specialists').doc(cred.user.uid).set({
+                        name, specialization, startDate, email, deleted: false
+                    });
+                    alert('تمت إضافة الأخصائي');
+                    showScreen('admin-screen');
+                    loadSpecialists();
+                } catch (err) {
+                    alert('خطأ: ' + err.message);
+                }
+            }
+        });
+
+        window.editSpecialist = async (id) => {
+            const doc = await db.collection('specialists').doc(id).get();
+            const s = doc.data();
+            document.getElementById('form-title').textContent = 'تعديل أخصائي';
+            document.getElementById('specialist-id').value = id;
+            document.getElementById('specialist-name-input').value = s.name;
+            document.getElementById('specialist-specialization').value = s.specialization;
+            document.getElementById('specialist-start-date').value = s.startDate;
+            document.getElementById('specialist-email-input').value = s.email;
+            document.getElementById('specialist-password-input').value = '';
+            showScreen('specialist-form-screen');
+        };
+
+        window.deleteSpecialist = async (id) => {
+            if (confirm('سيتم نقل الأخصائي إلى السلة. هل أنت متأكد؟')) {
+                await db.collection('specialists').doc(id).update({ deleted: true });
+                loadSpecialists();
+            }
+        };
+
+        // ==================== إدارة الأطفال ====================
+        function loadChildren() {
+            const container = document.getElementById('children-list');
+            container.innerHTML = '<p>جاري التحميل...</p>';
+            db.collection('children').where('deleted', '==', false).get()
+                .then(snapshot => {
+                    if (snapshot.empty) {
+                        container.innerHTML = '<p>لا يوجد أطفال بعد</p>';
+                        return;
+                    }
+                    let html = '';
+                    snapshot.forEach(doc => {
+                        const c = doc.data();
+                        const age = calculateAge(c.birthDate);
+                        html += `
+                            <div class="list-item" data-id="${doc.id}" onclick="viewChildMonths('${doc.id}')">
+                                <div class="item-title">${c.name}</div>
+                                <div class="item-subtitle">العمر: ${age} | تشخيص: ${c.initialDiagnosis}</div>
+                                <div class="item-actions" onclick="event.stopPropagation()">
+                                    <button class="edit-btn" onclick="editChild('${doc.id}')"><i class="fas fa-edit"></i> تعديل</button>
+                                    <button class="delete-btn" onclick="deleteChild('${doc.id}')"><i class="fas fa-trash"></i> حذف</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                });
+        }
+
+        function calculateAge(birthDate) {
+            const birth = new Date(birthDate);
+            const now = new Date();
+            let years = now.getFullYear() - birth.getFullYear();
+            let months = now.getMonth() - birth.getMonth();
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+            return `${years} سنة و ${months} شهر`;
+        }
+
+        document.getElementById('add-child-btn').addEventListener('click', () => {
+            document.getElementById('child-form-title').textContent = 'إضافة طفل';
+            document.getElementById('child-form').reset();
+            document.getElementById('child-id').value = '';
+            showScreen('child-form-screen');
+        });
+
+        document.getElementById('child-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('child-id').value;
+            const name = document.getElementById('child-name').value;
+            const birthDate = document.getElementById('child-birthdate').value;
+            const diagnosis = document.getElementById('child-diagnosis').value;
+
+            if (id) {
+                await db.collection('children').doc(id).update({
+                    name, birthDate, initialDiagnosis: diagnosis
+                });
+                alert('تم التحديث');
+                showScreen('specialist-screen');
+                loadChildren();
+            } else {
+                await db.collection('children').add({
+                    name, birthDate, initialDiagnosis: diagnosis,
+                    createdBy: currentUser ? currentUser.id : null,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    deleted: false
+                });
+                alert('تمت إضافة الطفل');
+                showScreen('specialist-screen');
+                loadChildren();
+            }
+        });
+
+        window.editChild = async (id) => {
+            const doc = await db.collection('children').doc(id).get();
+            const c = doc.data();
+            document.getElementById('child-form-title').textContent = 'تعديل طفل';
+            document.getElementById('child-id').value = id;
+            document.getElementById('child-name').value = c.name;
+            document.getElementById('child-birthdate').value = c.birthDate;
+            document.getElementById('child-diagnosis').value = c.initialDiagnosis;
+            showScreen('child-form-screen');
+        };
+
+        window.deleteChild = async (id) => {
+            if (confirm('سيتم نقل الطفل إلى السلة. هل أنت متأكد؟')) {
+                await db.collection('children').doc(id).update({ deleted: true });
+                loadChildren();
+            }
+        };
+
+        window.viewChildMonths = (childId) => {
+            currentChildId = childId;
+            db.collection('children').doc(childId).get().then(doc => {
+                currentChildData = doc.data();
+                document.getElementById('child-name-display').textContent = currentChildData.name;
+                document.getElementById('child-age-display').textContent = calculateAge(currentChildData.birthDate);
+            });
+            loadMonths();
+            showScreen('child-months-screen');
+        };
+
+        function loadMonths() {
+            db.collection('sessions').where('childId', '==', currentChildId).get()
+                .then(snapshot => {
+                    const monthsSet = new Set();
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        monthsSet.add(`${data.year}-${data.month}`);
+                    });
+                    const months = Array.from(monthsSet).sort();
+                    const container = document.getElementById('months-list');
+                    if (months.length === 0) {
+                        container.innerHTML = '<p>لا توجد أشهر مسجلة بعد. أضف شهراً جديداً.</p>';
+                    } else {
+                        let html = '';
+                        months.forEach(ym => {
+                            const [y, m] = ym.split('-');
+                            const monthName = new Date(y, m-1).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long' });
+                            html += `<div class="list-item" onclick="viewMonthWeeks('${ym}')">${monthName}</div>`;
+                        });
+                        container.innerHTML = html;
+                    }
+                });
+        }
+
+        document.getElementById('add-month-btn').addEventListener('click', () => {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const ym = `${year}-${month.toString().padStart(2,'0')}`;
+            viewMonthWeeks(ym);
+        });
+
+        window.viewMonthWeeks = (yearMonth) => {
+            currentYearMonth = yearMonth;
+            const [y, m] = yearMonth.split('-');
+            const monthName = new Date(y, m-1).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long' });
+            document.getElementById('month-name-display').textContent = monthName;
+            const weeksContainer = document.getElementById('weeks-list');
+            let weeksHtml = '';
+            for (let w = 1; w <= 5; w++) {
+                weeksHtml += `<button class="week-btn" onclick="viewWeekAreas(${w})">الأسبوع ${w}</button>`;
+            }
+            weeksContainer.innerHTML = weeksHtml;
+            showScreen('month-weeks-screen');
+        };
+
+        window.viewWeekAreas = (week) => {
+            currentWeek = week;
+            document.getElementById('week-number').textContent = week;
+            const areas = [
+                'التخاطب', 'تنمية المهارات', 'رعاية الذات', 'وظيفي', 'حركي', 'أكاديمي',
+                'اجتماعي', 'سلوكي', 'نمائي', 'حسي', 'حسي مهاري', 'مهني', 'حياتي', 'الدمج', 'السوشيال'
+            ];
+            const grid = document.getElementById('areas-grid');
+            let html = '';
+            areas.forEach(area => {
+                html += `<button class="area-btn" onclick="viewSession('${area}')">${area}</button>`;
+            });
+            grid.innerHTML = html;
+            showScreen('week-areas-screen');
+        };
+
+        window.viewSession = async (area) => {
+            currentArea = area;
+            document.getElementById('area-name-display').textContent = area;
+            const [year, month] = currentYearMonth.split('-');
+            const snapshot = await db.collection('sessions')
+                .where('childId', '==', currentChildId)
+                .where('year', '==', parseInt(year))
+                .where('month', '==', parseInt(month))
+                .where('week', '==', currentWeek)
+                .where('area', '==', area)
+                .get();
+            
+            const form = document.getElementById('session-form');
+            form.reset();
+            document.getElementById('session-id').value = '';
+            
+            if (!snapshot.empty) {
+                const doc = snapshot.docs[0];
+                const data = doc.data();
+                document.getElementById('session-id').value = doc.id;
+                document.getElementById('session-specialist').value = data.specialistName || '';
+                document.getElementById('session-goals').value = data.goalsCount || 0;
+                document.getElementById('session-videos').value = data.videosCount || 0;
+                if (data.motivation) document.querySelector(`input[name="motivation"][value="${data.motivation}"]`).checked = true;
+                if (data.behavior) document.querySelector(`input[name="behavior"][value="${data.behavior}"]`).checked = true;
+                if (data.goalsAchieved) document.querySelector(`input[name="goalsAchieved"][value="${data.goalsAchieved}"]`).checked = true;
+                if (data.parentInteraction) document.querySelector(`input[name="parentInteraction"][value="${data.parentInteraction}"]`).checked = true;
+                document.getElementById('session-general').value = data.generalNotes || '';
+                document.getElementById('session-technical').value = data.technicalGuidance || '';
+                document.getElementById('session-suggestions').value = data.technicalSuggestions || '';
+            }
+            showScreen('session-screen');
+        };
+
+        document.getElementById('session-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('session-id').value;
+            const [year, month] = currentYearMonth.split('-');
+            
+            const motivation = document.querySelector('input[name="motivation"]:checked')?.value;
+            const behavior = document.querySelector('input[name="behavior"]:checked')?.value;
+            const goalsAchieved = document.querySelector('input[name="goalsAchieved"]:checked')?.value;
+            const parentInteraction = document.querySelector('input[name="parentInteraction"]:checked')?.value;
+            
+            const sessionData = {
+                childId: currentChildId,
+                year: parseInt(year),
+                month: parseInt(month),
+                week: currentWeek,
+                area: currentArea,
+                specialistName: document.getElementById('session-specialist').value,
+                goalsCount: parseInt(document.getElementById('session-goals').value),
+                videosCount: parseInt(document.getElementById('session-videos').value),
+                motivation,
+                behavior,
+                goalsAchieved,
+                parentInteraction,
+                generalNotes: document.getElementById('session-general').value,
+                technicalGuidance: document.getElementById('session-technical').value,
+                technicalSuggestions: document.getElementById('session-suggestions').value,
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            if (id) {
+                await db.collection('sessions').doc(id).update(sessionData);
+                alert('تم التحديث');
+            } else {
+                await db.collection('sessions').add(sessionData);
+                alert('تم الحفظ');
+            }
+            viewWeekAreas(currentWeek);
+        });
+
+        document.getElementById('delete-session-btn').addEventListener('click', async () => {
+            const id = document.getElementById('session-id').value;
+            if (id && confirm('هل أنت متأكد من حذف هذه الجلسة؟')) {
+                await db.collection('sessions').doc(id).delete();
+                alert('تم الحذف');
+                viewWeekAreas(currentWeek);
+            }
+        });
+
+        // ==================== التقارير ====================
+        document.getElementById('week-report-btn').addEventListener('click', generateWeekReport);
+        document.getElementById('month-report-btn').addEventListener('click', generateMonthReport);
+
+        async function generateWeekReport() {
+            const [year, month] = currentYearMonth.split('-');
+            const sessions = await db.collection('sessions')
+                .where('childId', '==', currentChildId)
+                .where('year', '==', parseInt(year))
+                .where('month', '==', parseInt(month))
+                .where('week', '==', currentWeek)
+                .get();
+            
+            const childDoc = await db.collection('children').doc(currentChildId).get();
+            const child = childDoc.data();
+            const age = calculateAge(child.birthDate);
+            
+            let content = `<h2>تقرير الأسبوع ${currentWeek} للطفل: ${child.name}</h2>`;
+            content += `<p>العمر: ${age} | التشخيص: ${child.initialDiagnosis}</p>`;
+            
+            sessions.forEach(doc => {
+                const s = doc.data();
+                content += `<div class="report-section"><h4>${s.area}</h4>`;
+                content += `<p><strong>الأخصائي:</strong> ${s.specialistName}</p>`;
+                content += `<p><strong>الأهداف:</strong> ${s.goalsCount} | <strong>فيديوهات:</strong> ${s.videosCount}</p>`;
+                content += `<p><strong>الدافعية:</strong> ${s.motivation} | <strong>السلوك:</strong> ${s.behavior}</p>`;
+                content += `<p><strong>تحقق الأهداف:</strong> ${s.goalsAchieved} | <strong>تفاعل ولي الأمر:</strong> ${s.parentInteraction}</p>`;
+                content += `<p><strong>تطورات عامة:</strong> ${s.generalNotes || 'لا يوجد'}</p>`;
+                content += `<p><strong>توجيهات فنية:</strong> ${s.technicalGuidance || 'لا يوجد'}</p>`;
+                content += `<p><strong>مقترحات فنية:</strong> ${s.technicalSuggestions || 'لا يوجد'}</p>`;
+                content += `</div>`;
+            });
+            
+            document.getElementById('report-title').textContent = `تقرير الأسبوع ${currentWeek}`;
+            document.getElementById('report-content').innerHTML = content;
+            showScreen('report-screen');
+        }
+
+        async function generateMonthReport() {
+            if (!currentChildId || !currentYearMonth) {
+                alert('الرجاء اختيار طفل وشهر أولاً');
+                return;
+            }
+            
+            const [year, month] = currentYearMonth.split('-');
+            const yearNum = parseInt(year);
+            const monthNum = parseInt(month);
+            
+            try {
+                const sessionsSnapshot = await db.collection('sessions')
+                    .where('childId', '==', currentChildId)
+                    .where('year', '==', yearNum)
+                    .where('month', '==', monthNum)
+                    .get();
+                
+                if (sessionsSnapshot.empty) {
+                    alert('لا توجد جلسات مسجلة لهذا الشهر');
+                    return;
+                }
+                
+                const childDoc = await db.collection('children').doc(currentChildId).get();
+                const child = childDoc.data();
+                const age = calculateAge(child.birthDate);
+                
+                const weeksData = {};
+                sessionsSnapshot.forEach(doc => {
+                    const s = doc.data();
+                    if (!weeksData[s.week]) weeksData[s.week] = [];
+                    weeksData[s.week].push(s);
+                });
+                
+                let content = `<h2>تقرير شهر ${new Date(yearNum, monthNum-1).toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' })}</h2>`;
+                content += `<p><strong>الطفل:</strong> ${child.name} | <strong>العمر:</strong> ${age} | <strong>التشخيص:</strong> ${child.initialDiagnosis}</p>`;
+                
+                const weeksSorted = Object.keys(weeksData).sort((a,b) => parseInt(a)-parseInt(b));
+                
+                for (const week of weeksSorted) {
+                    content += `<h3>الأسبوع ${week}</h3>`;
+                    weeksData[week].forEach(s => {
+                        content += `<div class="report-section">`;
+                        content += `<h4>${s.area}</h4>`;
+                        content += `<p><strong>الأخصائي:</strong> ${s.specialistName || 'غير محدد'}</p>`;
+                        content += `<p><strong>الأهداف:</strong> ${s.goalsCount || 0} | <strong>فيديوهات:</strong> ${s.videosCount || 0}</p>`;
+                        content += `<p><strong>الدافعية:</strong> ${s.motivation || 'غير محدد'} | <strong>السلوك:</strong> ${s.behavior || 'غير محدد'}</p>`;
+                        content += `<p><strong>تحقق الأهداف:</strong> ${s.goalsAchieved || 'غير محدد'} | <strong>تفاعل ولي الأمر:</strong> ${s.parentInteraction || 'غير محدد'}</p>`;
+                        content += `<p><strong>تطورات عامة:</strong> ${s.generalNotes || 'لا يوجد'}</p>`;
+                        content += `<p><strong>توجيهات فنية:</strong> ${s.technicalGuidance || 'لا يوجد'}</p>`;
+                        content += `<p><strong>مقترحات فنية:</strong> ${s.technicalSuggestions || 'لا يوجد'}</p>`;
+                        content += `</div>`;
+                    });
+                }
+                
+                content += `<div style="margin-top:30px; padding:15px; background:#f0f8ff; border-radius:10px; text-align:center;">`;
+                content += `<p>✨ <strong>شكراً لجهودك مع الطفل، استمر في التميز!</strong> ✨</p>`;
+                content += `<p>نسأل الله له دوام التقدم والنجاح</p>`;
+                content += `</div>`;
+                
+                document.getElementById('report-title').textContent = 'تقرير الشهر';
+                document.getElementById('report-content').innerHTML = content;
+                showScreen('report-screen');
+                
+            } catch (error) {
+                console.error(error);
+                alert('حدث خطأ أثناء إنشاء التقرير');
+            }
+        }
+
+        // ==================== السلة ====================
+        document.getElementById('trash-btn').addEventListener('click', () => {
+            showScreen('trash-screen');
+            loadTrash('children');
+        });
+
+        document.querySelectorAll('.trash-tab').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.trash-tab').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                loadTrash(e.target.dataset.type);
+            });
+        });
+
+        async function loadTrash(type) {
+            const container = document.getElementById('trash-items');
+            container.innerHTML = '<p>جاري التحميل...</p>';
+            const snapshot = await db.collection(type).where('deleted', '==', true).get();
+            if (snapshot.empty) {
+                container.innerHTML = '<p>السلة فارغة</p>';
+                return;
+            }
+            let html = '';
+            snapshot.forEach(doc => {
+                const item = doc.data();
+                html += `
+                    <div class="list-item">
+                        <div class="item-title">${item.name || item.email}</div>
+                        <div class="item-subtitle">${item.specialization || ''}</div>
+                        <div class="item-actions">
+                            <button onclick="restoreItem('${type}', '${doc.id}')">استعادة</button>
+                            <button class="delete-btn" onclick="permanentlyDelete('${type}', '${doc.id}')">حذف نهائي</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        window.restoreItem = async (type, id) => {
+            await db.collection(type).doc(id).update({ deleted: false });
+            loadTrash(type);
+        };
+
+        window.permanentlyDelete = async (type, id) => {
+            if (confirm('سيتم حذف العنصر نهائياً! هل أنت متأكد؟')) {
+                await db.collection(type).doc(id).delete();
+                loadTrash(type);
+            }
+        };
+
+        document.getElementById('empty-trash-btn').addEventListener('click', async () => {
+            if (confirm('سيتم تفريغ السلة بالكامل من الأطفال والأخصائيين المحذوفين. هل أنت متأكد؟')) {
+                const types = ['children', 'specialists'];
+                for (const type of types) {
+                    const snapshot = await db.collection(type).where('deleted', '==', true).get();
+                    snapshot.forEach(doc => doc.ref.delete());
+                }
+                alert('تم التفريغ');
+                loadTrash('children');
+            }
+        });
+
+        // ==================== النسخ الاحتياطي ====================
+        document.getElementById('backup-btn').addEventListener('click', async () => {
+            const collections = ['specialists', 'children', 'sessions'];
+            const backup = {};
+            for (const coll of collections) {
+                const snapshot = await db.collection(coll).get();
+                backup[coll] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            }
+            const dataStr = JSON.stringify(backup, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ican_backup_${new Date().toISOString()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        document.getElementById('restore-btn').addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = async (ev) => {
+                    try {
+                        const backup = JSON.parse(ev.target.result);
+                        if (!confirm('سيتم استبدال جميع البيانات الحالية. هل أنت متأكد؟')) return;
+                        for (const coll in backup) {
+                            for (const item of backup[coll]) {
+                                await db.collection(coll).doc(item.id).set(item);
+                            }
+                        }
+                        alert('تمت الاستعادة');
+                    } catch (err) {
+                        alert('ملف غير صالح');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        });
+
+        // ==================== إحصائيات السينيورز ====================
+        document.getElementById('specialist-stats-btn').addEventListener('click', showStats);
+        document.getElementById('specialist-stats-btn2').addEventListener('click', showStats);
+
+        async function showStats() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            
+            const childrenSnap = await db.collection('children').where('deleted', '==', false).get();
+            const children = childrenSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            
+            const specialistsSnap = await db.collection('specialists').where('deleted', '==', false).get();
+            const specialists = specialistsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            
+            const sessionsSnap = await db.collection('sessions')
+                .where('year', '==', year)
+                .where('month', '==', month)
+                .get();
+            const sessions = sessionsSnap.docs.map(d => d.data());
+            
+            let statsHtml = '<h3>إحصائيات الشهر الحالي</h3>';
+            
+            specialists.forEach(spec => {
+                const specSessions = sessions.filter(s => s.specialistName === spec.name);
+                const childIds = new Set(specSessions.map(s => s.childId));
+                statsHtml += `<div class="stats-card"><h4>${spec.name}</h4>`;
+                statsHtml += `<p>عدد الأطفال المسجل لهم: ${childIds.size}</p>`;
+                
+                childIds.forEach(childId => {
+                    const child = children.find(c => c.id === childId);
+                    if (child) {
+                        const childSessions = specSessions.filter(s => s.childId === childId);
+                        const weeksPresent = new Set(childSessions.map(s => s.week));
+                        const weeksComplete = weeksPresent.size === 5 ? 'مكتمل' : `أسابيع: ${Array.from(weeksPresent).join(', ')}`;
+                        statsHtml += `<div class="stats-detail">${child.name}: ${weeksComplete}</div>`;
+                    }
+                });
+                statsHtml += '</div>';
+            });
+            
+            document.getElementById('stats-container').innerHTML = statsHtml;
+            showScreen('stats-screen');
+        }
+
+        // ==================== الخاصية الجديدة: عرض جميع الأطفال للإدارة ====================
+        const viewAllChildrenBtn = document.getElementById('view-all-children-btn');
+        if (viewAllChildrenBtn) {
+            viewAllChildrenBtn.addEventListener('click', () => {
+                showScreen('admin-children-screen');
+                loadAllChildrenForAdmin();
+            });
+        }
+
+        async function loadAllChildrenForAdmin() {
+            const container = document.getElementById('admin-children-list');
+            container.innerHTML = '<p>جاري التحميل...</p>';
+            try {
+                const snapshot = await db.collection('children').where('deleted', '==', false).get();
+                if (snapshot.empty) {
+                    container.innerHTML = '<p>لا يوجد أطفال بعد</p>';
+                    return;
+                }
+                let html = '';
+                snapshot.forEach(doc => {
+                    const c = doc.data();
+                    const age = calculateAge(c.birthDate);
+                    html += `
+                        <div class="list-item" onclick="viewComprehensiveChildReport('${doc.id}')">
+                            <div class="item-title">${c.name}</div>
+                            <div class="item-subtitle">العمر: ${age} | تشخيص: ${c.initialDiagnosis}</div>
+                            <div class="item-subtitle" style="font-size:0.8rem;">تمت الإضافة بواسطة: ${c.createdBy ? 'أخصائي' : 'غير معروف'}</div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = '<p>خطأ في التحميل</p>';
+            }
+        }
+
+        window.viewComprehensiveChildReport = async (childId) => {
+    try {
+        // جلب بيانات الطفل
+        const childDoc = await db.collection('children').doc(childId).get();
+        if (!childDoc.exists) {
+            alert('الطفل غير موجود');
+            return;
+        }
+        const child = childDoc.data();
+        const age = calculateAge(child.birthDate);
+
+        // جلب جميع جلسات هذا الطفل بدون ترتيب (لأننا سنرتبها يدوياً)
+        const sessionsSnapshot = await db.collection('sessions')
+            .where('childId', '==', childId)
+            .get();
+
+        if (sessionsSnapshot.empty) {
+            alert('لا توجد جلسات مسجلة لهذا الطفل');
+            return;
+        }
+
+        // تحويل الجلسات إلى مصفوفة عادية
+        const sessions = [];
+        sessionsSnapshot.forEach(doc => sessions.push(doc.data()));
+
+        // ترتيب الجلسات يدوياً: الأحدث أولاً (سنة ثم شهر تنازلي، أسبوع تصاعدي)
+        sessions.sort((a, b) => {
+            if (a.year !== b.year) return b.year - a.year; // الأحدث سنة أولاً
+            if (a.month !== b.month) return b.month - a.month; // الأحدث شهر أولاً
+            return (a.week || 0) - (b.week || 0); // الأسبوع تصاعدي
+        });
+
+        // تجميع الجلسات حسب الشهر
+        const monthsMap = new Map(); // المفتاح: "year-month"
+        sessions.forEach(s => {
+            const key = `${s.year}-${s.month.toString().padStart(2, '0')}`;
+            if (!monthsMap.has(key)) monthsMap.set(key, []);
+            monthsMap.get(key).push(s);
+        });
+
+        // ترتيب الأشهر تنازلياً (الأحدث أولاً)
+        const sortedMonths = Array.from(monthsMap.keys()).sort().reverse();
+
+        // بناء محتوى التقرير
+        let content = `<h2>تقرير شامل للطفل: ${child.name}</h2>`;
+        content += `<p>العمر: ${age} | التشخيص: ${child.initialDiagnosis}</p>`;
+
+        for (const monthKey of sortedMonths) {
+            const [year, month] = monthKey.split('-');
+            const monthName = new Date(year, month - 1).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long' });
+            content += `<h3 style="margin-top:20px;">${monthName}</h3>`;
+
+            const monthSessions = monthsMap.get(monthKey);
+            // تجميع حسب الأسبوع داخل الشهر
+            const weeksMap = new Map();
+            monthSessions.forEach(s => {
+                if (!weeksMap.has(s.week)) weeksMap.set(s.week, []);
+                weeksMap.get(s.week).push(s);
+            });
+            const sortedWeeks = Array.from(weeksMap.keys()).sort((a, b) => a - b);
+
+            for (const week of sortedWeeks) {
+                content += `<h4>الأسبوع ${week}</h4>`;
+                weeksMap.get(week).forEach(s => {
+                    content += `<div class="report-section">`;
+                    content += `<p><strong>المجال:</strong> ${s.area}</p>`;
+                    content += `<p><strong>الأخصائي:</strong> ${s.specialistName || 'غير محدد'}</p>`;
+                    content += `<p><strong>الأهداف:</strong> ${s.goalsCount || 0} | <strong>فيديوهات:</strong> ${s.videosCount || 0}</p>`;
+                    content += `<p><strong>الدافعية:</strong> ${s.motivation || 'غير محدد'} | <strong>السلوك:</strong> ${s.behavior || 'غير محدد'}</p>`;
+                    content += `<p><strong>تحقق الأهداف:</strong> ${s.goalsAchieved || 'غير محدد'} | <strong>تفاعل ولي الأمر:</strong> ${s.parentInteraction || 'غير محدد'}</p>`;
+                    if (s.generalNotes) content += `<p><strong>تطورات عامة:</strong> ${s.generalNotes}</p>`;
+                    if (s.technicalGuidance) content += `<p><strong>توجيهات فنية:</strong> ${s.technicalGuidance}</p>`;
+                    if (s.technicalSuggestions) content += `<p><strong>مقترحات فنية:</strong> ${s.technicalSuggestions}</p>`;
+                    content += `</div>`;
+                });
+            }
+        }
+
+        // إضافة جملة تحفيزية
+        content += `<div style="margin-top:30px; padding:15px; background:#f0f8ff; border-radius:10px; text-align:center;">
+            <p>✨ <strong>تقرير شامل يوضح تقدم الطفل بجهود جميع الأخصائيين</strong> ✨</p>
+        </div>`;
+
+        document.getElementById('report-title').textContent = 'تقرير شامل';
+        document.getElementById('report-content').innerHTML = content;
+        window.currentComprehensiveChildId = childId; // لتذكره عند الرجوع
+        showScreen('report-screen');
+    } catch (error) {
+        console.error(error); // سجل الخطأ في الكونسول لمساعدتنا في التشخيص
+        alert('حدث خطأ أثناء إنشاء التقرير: ' + error.message); // عرض رسالة أكثر تفصيلاً
+    }
+};
+
+        // ==================== بدء التشغيل ====================
+        checkStoredLogin();
+
+        auth.onAuthStateChanged(user => {
+            if (!user && currentUser && currentUser.type === 'specialist') {
+                logout();
+            }
+        });
+    </script>
+</body>
+</html>
