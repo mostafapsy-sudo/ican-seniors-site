@@ -418,12 +418,17 @@
             </div>
         </div>
 
-        <!-- شاشة جميع الأطفال (للإدارة) -->
+                <!-- شاشة جميع الأطفال (للإدارة) -->
         <div id="admin-children-screen" class="screen">
             <div class="header">
                 <button class="back-btn"><i class="fas fa-arrow-right"></i> رجوع</button>
                 <h3>جميع الأطفال</h3>
             </div>
+            <!-- بداية الكود المضاف: مربع البحث -->
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="search-admin-child-input" placeholder="ابحث باسم الطفل..." style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd;">
+            </div>
+            <!-- نهاية الكود المضاف -->
             <div id="admin-children-list" class="list-container">
                 <!-- تظهر هنا قائمة الأطفال -->
             </div>
@@ -439,6 +444,11 @@
                 <button id="add-child-btn"><i class="fas fa-child"></i> إضافة طفل</button>
                 <button id="specialist-stats-btn2" class="stats-btn"><i class="fas fa-chart-bar"></i> إحصائيات</button>
             </div>
+            <!-- بداية الكود المضاف: مربع البحث -->
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="search-child-input" placeholder="ابحث باسم الطفل..." style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ddd;">
+            </div>
+            <!-- نهاية الكود المضاف -->
             <div id="children-list" class="list-container">
                 <!-- سيتم عرض الأطفال هنا -->
             </div>
@@ -659,12 +669,15 @@
         const db = firebase.firestore();
 
         // ==================== المتغيرات العامة ====================
+        let allChildren = []; // لتخزين جميع الأطفال (لواجهة الأخصائي)
+        let allAdminChildren = []; // لتخزين جميع الأطفال (لواجهة الإدارة)
         let currentUser = null; // { type: 'admin' أو 'specialist', id, name? }
         let currentChildId = null;
         let currentChildData = null;
         let currentYearMonth = null; // مثلاً "2025-01"
         let currentWeek = null;
         let currentArea = null;
+        
 
         // عناصر DOM
         const screens = document.querySelectorAll('.screen');
@@ -741,25 +754,46 @@
             document.getElementById(screenId).classList.add('active');
         }
 
-        // التحقق من حالة تسجيل الدخول المخزنة
+                // التحقق من حالة تسجيل الدخول المخزنة
         function checkStoredLogin() {
             const stored = localStorage.getItem('ican_user');
-            if (stored) {
+            if (!stored) return;
+
+            try {
                 const user = JSON.parse(stored);
                 if (user.type === 'admin') {
+                    // admin لا يحتاج للتحقق من Firebase
                     currentUser = user;
                     showScreen('admin-screen');
                     loadSpecialists();
-                } else if (user.type === 'specialist') {
-                    if (auth.currentUser) {
-                        currentUser = user;
-                        showScreen('specialist-screen');
-                        document.getElementById('specialist-name').textContent = user.name;
-                        loadChildren();
-                    } else {
-                        localStorage.removeItem('ican_user');
-                    }
+                } else if (user.type === 'specialist' && user.id) {
+                    // تحقق من وجود الأخصائي في Firestore
+                    db.collection('specialists').doc(user.id).get()
+                        .then(doc => {
+                            if (doc.exists && !doc.data().deleted) {
+                                // تحديث البيانات في حال تغير الاسم مثلاً
+                                user.name = doc.data().name;
+                                localStorage.setItem('ican_user', JSON.stringify(user));
+                                currentUser = user;
+                                showScreen('specialist-screen');
+                                document.getElementById('specialist-name').textContent = user.name;
+                                loadChildren();
+                            } else {
+                                // الحساب غير صالح، امسح البيانات
+                                localStorage.removeItem('ican_user');
+                                showScreen('login-screen');
+                            }
+                        })
+                        .catch(error => {
+                            console.error("خطأ في التحقق من الأخصائي:", error);
+                            localStorage.removeItem('ican_user');
+                            showScreen('login-screen');
+                        });
                 }
+            } catch (e) {
+                // بيانات تالفة، امسحها
+                localStorage.removeItem('ican_user');
+                showScreen('login-screen');
             }
         }
 
@@ -774,7 +808,7 @@
             });
         });
 
-        document.getElementById('admin-login-btn').addEventListener('click', () => {
+                document.getElementById('admin-login-btn').addEventListener('click', () => {
             const code = document.getElementById('admin-code').value.trim();
             if (code === 'رمضان كريم') {
                 currentUser = { type: 'admin' };
@@ -786,7 +820,7 @@
             }
         });
 
-        document.getElementById('specialist-login-btn').addEventListener('click', () => {
+                document.getElementById('specialist-login-btn').addEventListener('click', () => {
             const email = document.getElementById('specialist-email').value.trim();
             const password = document.getElementById('specialist-password').value;
             auth.signInWithEmailAndPassword(email, password)
@@ -910,33 +944,92 @@
         };
 
         // ==================== إدارة الأطفال ====================
+                        // دالة لعرض الأطفال في واجهة الأخصائي مع الفلترة والترتيب
+                function displayChildren(filterText = '') {
+            const container = document.getElementById('children-list');
+            if (!container) return;
+
+            // التحقق من وجود بيانات
+            if (!allChildren || allChildren.length === 0) {
+                container.innerHTML = '<p>لا يوجد أطفال بعد</p>';
+                return;
+            }
+
+            // فلترة الأطفال مع التأكد من وجود الاسم
+            let filtered = allChildren.filter(child => {
+                if (!child || !child.name) return false; // تجاهل العناصر التالفة
+                return child.name.includes(filterText);
+            });
+            
+            // ترتيب أبجدي
+            filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar'));
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<p>لا يوجد أطفال مطابقين للبحث</p>';
+                return;
+            }
+            
+            let html = '';
+            filtered.forEach(item => {
+                const c = item.data || {};
+                const age = calculateAge(c.birthDate || '');
+                html += `
+                    <div class="list-item" data-id="${item.id}" onclick="viewChildMonths('${item.id}')">
+                        <div class="item-title">${c.name || ''}</div>
+                        <div class="item-subtitle">العمر: ${age} | تشخيص: ${c.initialDiagnosis || ''}</div>
+                        <div class="item-actions" onclick="event.stopPropagation()">
+                            <button class="edit-btn" onclick="editChild('${item.id}')"><i class="fas fa-edit"></i> تعديل</button>
+                            <button class="delete-btn" onclick="deleteChild('${item.id}')"><i class="fas fa-trash"></i> حذف</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // دالة تحميل الأطفال (جلبهم من قاعدة البيانات)
         function loadChildren() {
             const container = document.getElementById('children-list');
+            if (!container) return;
             container.innerHTML = '<p>جاري التحميل...</p>';
+            
             db.collection('children').where('deleted', '==', false).get()
                 .then(snapshot => {
                     if (snapshot.empty) {
                         container.innerHTML = '<p>لا يوجد أطفال بعد</p>';
+                        allChildren = [];
                         return;
                     }
-                    let html = '';
+                    // تخزين جميع الأطفال في المتغير العام
+                    allChildren = [];
                     snapshot.forEach(doc => {
-                        const c = doc.data();
-                        const age = calculateAge(c.birthDate);
-                        html += `
-                            <div class="list-item" data-id="${doc.id}" onclick="viewChildMonths('${doc.id}')">
-                                <div class="item-title">${c.name}</div>
-                                <div class="item-subtitle">العمر: ${age} | تشخيص: ${c.initialDiagnosis}</div>
-                                <div class="item-actions" onclick="event.stopPropagation()">
-                                    <button class="edit-btn" onclick="editChild('${doc.id}')"><i class="fas fa-edit"></i> تعديل</button>
-                                    <button class="delete-btn" onclick="deleteChild('${doc.id}')"><i class="fas fa-trash"></i> حذف</button>
-                                </div>
-                            </div>
-                        `;
+                        allChildren.push({
+                            id: doc.id,
+                            name: doc.data().name, // نخزن الاسم أيضاً لتسهيل البحث
+                            data: doc.data()
+                        });
                     });
-                    container.innerHTML = html;
+                    
+                    // عرض الأطفال بدون فلتر (أو مع قيمة الفلتر الحالية من مربع البحث)
+                    const searchInput = document.getElementById('search-child-input');
+                    const currentFilter = searchInput ? searchInput.value : '';
+                    displayChildren(currentFilter);
+                })
+                .catch(error => {
+                    console.error("خطأ في تحميل الأطفال:", error);
+                    container.innerHTML = '<p>حدث خطأ في التحميل. راجع وحدة التحكم.</p>';
                 });
         }
+
+        // ربط مربع البحث بوظيفة الفلترة (بعد التأكد من وجود العنصر)
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('search-child-input');
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    displayChildren(e.target.value);
+                });
+            }
+        });
 
         function calculateAge(birthDate) {
             const birth = new Date(birthDate);
@@ -1375,45 +1468,133 @@
         document.getElementById('specialist-stats-btn').addEventListener('click', showStats);
         document.getElementById('specialist-stats-btn2').addEventListener('click', showStats);
 
-        async function showStats() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth() + 1;
-            
-            const childrenSnap = await db.collection('children').where('deleted', '==', false).get();
-            const children = childrenSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-            
-            const specialistsSnap = await db.collection('specialists').where('deleted', '==', false).get();
-            const specialists = specialistsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-            
-            const sessionsSnap = await db.collection('sessions')
-                .where('year', '==', year)
-                .where('month', '==', month)
-                .get();
-            const sessions = sessionsSnap.docs.map(d => d.data());
-            
-            let statsHtml = '<h3>إحصائيات الشهر الحالي</h3>';
-            
-            specialists.forEach(spec => {
-                const specSessions = sessions.filter(s => s.specialistName === spec.name);
-                const childIds = new Set(specSessions.map(s => s.childId));
-                statsHtml += `<div class="stats-card"><h4>${spec.name}</h4>`;
-                statsHtml += `<p>عدد الأطفال المسجل لهم: ${childIds.size}</p>`;
-                
-                childIds.forEach(childId => {
-                    const child = children.find(c => c.id === childId);
-                    if (child) {
-                        const childSessions = specSessions.filter(s => s.childId === childId);
-                        const weeksPresent = new Set(childSessions.map(s => s.week));
-                        const weeksComplete = weeksPresent.size === 5 ? 'مكتمل' : `أسابيع: ${Array.from(weeksPresent).join(', ')}`;
-                        statsHtml += `<div class="stats-detail">${child.name}: ${weeksComplete}</div>`;
-                    }
+                                async function showStats() {
+            try {
+                // جلب جميع الأخصائيين غير المحذوفين
+                const specialistsSnap = await db.collection('specialists').where('deleted', '==', false).get();
+                const specialists = [];
+                specialistsSnap.forEach(doc => {
+                    specialists.push({ id: doc.id, ...doc.data() });
                 });
-                statsHtml += '</div>';
-            });
-            
-            document.getElementById('stats-container').innerHTML = statsHtml;
-            showScreen('stats-screen');
+
+                // جلب جميع الأطفال غير المحذوفين
+                const childrenSnap = await db.collection('children').where('deleted', '==', false).get();
+                const childrenMap = new Map(); // childId -> childData
+                childrenSnap.forEach(doc => {
+                    childrenMap.set(doc.id, doc.data());
+                });
+
+                // جلب جميع الجلسات
+                const sessionsSnap = await db.collection('sessions').get();
+
+                // تجميع الأطفال حسب اسم الأخصائي (كما هو في الجلسات)
+                const childrenBySessionName = {}; // اسم الأخصائي في الجلسة -> Set of childIds
+                sessionsSnap.forEach(doc => {
+                    const s = doc.data();
+                    const sessionName = s.specialistName;
+                    if (!sessionName) return; // تجاهل الجلسات بدون اسم
+
+                    // تنظيف الاسم من المسافات الزائدة
+                    const cleanName = sessionName.trim().replace(/\s+/g, ' ');
+                    if (!childrenBySessionName[cleanName]) {
+                        childrenBySessionName[cleanName] = new Set();
+                    }
+                    childrenBySessionName[cleanName].add(s.childId);
+                });
+
+                // بدء بناء محتوى الإحصائيات
+                let statsHtml = '<h3>إحصائيات السينيورز الرسميين</h3>';
+
+                // قسم الأخصائيين الرسميين
+                specialists.forEach(spec => {
+                    const specName = spec.name.trim().replace(/\s+/g, ' ');
+                    
+                    // محاولة إيجاد تطابق في أسماء الجلسات
+                    let matchedSessionName = null;
+                    let childrenSet = null;
+
+                    // 1. بحث تام
+                    if (childrenBySessionName[specName]) {
+                        matchedSessionName = specName;
+                        childrenSet = childrenBySessionName[specName];
+                    } else {
+                        // 2. بحث جزئي: هل يوجد اسم جلسة يحتوي على اسم الأخصائي أو العكس؟
+                        for (let sessionName in childrenBySessionName) {
+                            if (sessionName.includes(specName) || specName.includes(sessionName)) {
+                                matchedSessionName = sessionName;
+                                childrenSet = childrenBySessionName[sessionName];
+                                break;
+                            }
+                        }
+                    }
+
+                    const childrenCount = childrenSet ? childrenSet.size : 0;
+
+                    statsHtml += `<div class="stats-card"><h4>${spec.name}</h4>`;
+                    statsHtml += `<p>عدد الأطفال المسجل لهم: ${childrenCount}</p>`;
+
+                    if (childrenCount > 0) {
+                        statsHtml += `<div style="margin-right:15px; max-height:150px; overflow-y:auto;">`;
+                        childrenSet.forEach(childId => {
+                            const child = childrenMap.get(childId);
+                            if (child) {
+                                statsHtml += `<div>• ${child.name}</div>`;
+                            }
+                        });
+                        statsHtml += `</div>`;
+                        if (matchedSessionName && matchedSessionName !== specName) {
+                            statsHtml += `<p style="color:#f39c12; font-size:0.8rem;">(مطابق لاسم "${matchedSessionName}" في الجلسات)</p>`;
+                        }
+                    } else {
+                        statsHtml += `<p>لا يوجد أطفال مسجلين بعد.</p>`;
+                    }
+                    statsHtml += '</div>';
+                });
+
+                // قسم الأسماء الموجودة في الجلسات (لمن لا نعرفهم)
+                statsHtml += '<h3 style="margin-top:30px;">الأسماء الموجودة في الجلسات (غير الرسميين)</h3>';
+                
+                const knownSpecialistNames = new Set(specialists.map(s => s.name.trim().replace(/\s+/g, ' ')));
+                let unknownCount = 0;
+
+                for (let sessionName in childrenBySessionName) {
+                    // إذا كان الاسم غير موجود في الأخصائيين الرسميين (مع مراعاة التطابق الجزئي)
+                    let isKnown = false;
+                    for (let knownName of knownSpecialistNames) {
+                        if (knownName.includes(sessionName) || sessionName.includes(knownName)) {
+                            isKnown = true;
+                            break;
+                        }
+                    }
+
+                    if (!isKnown) {
+                        unknownCount++;
+                        const childrenSet = childrenBySessionName[sessionName];
+                        statsHtml += `<div class="stats-card" style="border-right-color:#e67e22;">`;
+                        statsHtml += `<h4>${sessionName}</h4>`;
+                        statsHtml += `<p>عدد الأطفال المسجل لهم: ${childrenSet.size}</p>`;
+                        statsHtml += `<div style="margin-right:15px; max-height:150px; overflow-y:auto;">`;
+                        childrenSet.forEach(childId => {
+                            const child = childrenMap.get(childId);
+                            if (child) {
+                                statsHtml += `<div>• ${child.name}</div>`;
+                            }
+                        });
+                        statsHtml += `</div>`;
+                        statsHtml += `</div>`;
+                    }
+                }
+
+                if (unknownCount === 0) {
+                    statsHtml += '<p>جميع الأسماء في الجلسات تطابق أخصائيين مسجلين.</p>';
+                }
+
+                document.getElementById('stats-container').innerHTML = statsHtml;
+                showScreen('stats-screen');
+            } catch (error) {
+                console.error("خطأ في الإحصائيات:", error);
+                alert('حدث خطأ أثناء جلب الإحصائيات');
+            }
         }
 
         // ==================== الخاصية الجديدة: عرض جميع الأطفال للإدارة ====================
@@ -1425,6 +1606,42 @@
             });
         }
 
+                // دالة لعرض الأطفال في واجهة الإدارة مع الفلترة والترتيب
+                function displayAdminChildren(filterText = '') {
+            const container = document.getElementById('admin-children-list');
+            if (!container) return;
+
+            if (!allAdminChildren || allAdminChildren.length === 0) {
+                container.innerHTML = '<p>لا يوجد أطفال بعد</p>';
+                return;
+            }
+
+            let filtered = allAdminChildren.filter(child => {
+                if (!child || !child.name) return false;
+                return child.name.includes(filterText);
+            });
+
+            filtered.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar'));
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<p>لا يوجد أطفال مطابقين للبحث</p>';
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(item => {
+                const age = calculateAge(item.birthDate || '');
+                html += `
+                    <div class="list-item" onclick="viewComprehensiveChildReport('${item.id}')">
+                        <div class="item-title">${item.name || ''}</div>
+                        <div class="item-subtitle">العمر: ${age} | تشخيص: ${item.initialDiagnosis || ''}</div>
+                        <div class="item-subtitle" style="font-size:0.8rem;">تمت الإضافة بواسطة: ${item.createdBy ? 'أخصائي' : 'غير معروف'}</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
         async function loadAllChildrenForAdmin() {
             const container = document.getElementById('admin-children-list');
             container.innerHTML = '<p>جاري التحميل...</p>';
@@ -1432,25 +1649,34 @@
                 const snapshot = await db.collection('children').where('deleted', '==', false).get();
                 if (snapshot.empty) {
                     container.innerHTML = '<p>لا يوجد أطفال بعد</p>';
+                    allAdminChildren = [];
                     return;
                 }
-                let html = '';
+                // تخزين جميع الأطفال في المتغير العام
+                allAdminChildren = [];
                 snapshot.forEach(doc => {
                     const c = doc.data();
-                    const age = calculateAge(c.birthDate);
-                    html += `
-                        <div class="list-item" onclick="viewComprehensiveChildReport('${doc.id}')">
-                            <div class="item-title">${c.name}</div>
-                            <div class="item-subtitle">العمر: ${age} | تشخيص: ${c.initialDiagnosis}</div>
-                            <div class="item-subtitle" style="font-size:0.8rem;">تمت الإضافة بواسطة: ${c.createdBy ? 'أخصائي' : 'غير معروف'}</div>
-                        </div>
-                    `;
+                    allAdminChildren.push({
+                        id: doc.id,
+                        name: c.name,
+                        birthDate: c.birthDate,
+                        initialDiagnosis: c.initialDiagnosis,
+                        createdBy: c.createdBy
+                    });
                 });
-                container.innerHTML = html;
+                // عرض الأطفال بدون فلتر
+                const searchInput = document.getElementById('search-admin-child-input');
+                const currentFilter = searchInput ? searchInput.value : '';
+                displayAdminChildren(currentFilter);
             } catch (error) {
                 container.innerHTML = '<p>خطأ في التحميل</p>';
             }
         }
+
+        // ربط مربع البحث بوظيفة الفلترة
+        document.getElementById('search-admin-child-input')?.addEventListener('input', function(e) {
+            displayAdminChildren(e.target.value);
+        });
 
         window.viewComprehensiveChildReport = async (childId) => {
     try {
@@ -1550,6 +1776,13 @@
 
         auth.onAuthStateChanged(user => {
             if (!user && currentUser && currentUser.type === 'specialist') {
+                logout();
+            }
+        });
+                // مراقبة تغيير حالة المصادقة (للأخصائيين)
+        auth.onAuthStateChanged(user => {
+            if (!user && currentUser && currentUser.type === 'specialist') {
+                // المستخدم خرج من Firebase، نسحبه من التطبيق أيضاً
                 logout();
             }
         });
